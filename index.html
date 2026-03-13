@@ -8,6 +8,7 @@
 body{
 margin:0;
 overflow:hidden;
+touch-action:none;
 background:black;
 color:white;
 font-family:monospace;
@@ -38,7 +39,7 @@ from{transform:scale(1)}
 to{transform:scale(1.05)}
 }
 
-/* PLAYER JET */
+/* PLAYER */
 
 #player{
 position:absolute;
@@ -50,7 +51,7 @@ bottom:80px;
 left:50%;
 }
 
-/* ENEMY GOAT */
+/* ENEMY */
 
 .enemy{
 position:absolute;
@@ -91,8 +92,6 @@ height:8px;
 border-radius:50%;
 background:orange;
 }
-
-/* SCORE */
 
 #score{
 position:absolute;
@@ -138,7 +137,7 @@ player.style.left=e.touches[0].clientX-35+"px"
 let score=0
 let enemyTypes=["Bayu","Amer","Sapei"]
 
-/* PLAYER AUTO SHOOT (3 peluru tiap 2 detik) */
+/* PLAYER SHOOT */
 
 setInterval(playerShoot,2000)
 
@@ -166,26 +165,6 @@ bullet.remove()
 clearInterval(move)
 }
 
-document.querySelectorAll(".enemy").forEach(enemy=>{
-
-if(
-bullet.offsetTop<enemy.offsetTop+80 &&
-bullet.offsetTop+14>enemy.offsetTop &&
-bullet.offsetLeft<enemy.offsetLeft+120 &&
-bullet.offsetLeft+6>enemy.offsetLeft
-){
-
-enemy.remove()
-bullet.remove()
-clearInterval(move)
-
-score++
-document.getElementById("score").innerText="Score: "+score
-
-}
-
-})
-
 },20)
 
 }
@@ -209,8 +188,6 @@ enemy.style.left=Math.random()*window.innerWidth+"px"
 enemy.style.top="-80px"
 
 document.body.appendChild(enemy)
-
-/* ENEMY SHOOT */
 
 let shoot=setInterval(()=>{
 enemyAttack(enemy,type)
@@ -250,7 +227,6 @@ let bullet=document.createElement("div")
 bullet.className="enemyBullet"
 
 bullet.style.background="red"
-
 bullet.style.left=enemy.offsetLeft+60+"px"
 bullet.style.top=enemy.offsetTop+80+"px"
 
@@ -260,7 +236,7 @@ moveDown(bullet,6)
 
 }
 
-/* SPREAD */
+/* SPREAD WITH DISTANCE LIMIT */
 
 function spread(enemy){
 
@@ -269,6 +245,7 @@ for(let i=0;i<4;i++){
 let bullet=document.createElement("div")
 bullet.className="enemyBullet"
 
+bullet.style.background="cyan"
 bullet.style.left=enemy.offsetLeft+60+"px"
 bullet.style.top=enemy.offsetTop+60+"px"
 
@@ -276,8 +253,8 @@ document.body.appendChild(bullet)
 
 let angle=i*(Math.PI/2)
 
-let vx=Math.cos(angle)*4
-let vy=Math.sin(angle)*4
+let vx=Math.cos(angle)*3
+let vy=Math.sin(angle)*3
 
 moveAngle(bullet,vx,vy)
 
@@ -303,7 +280,7 @@ moveDown(bullet,4)
 
 }
 
-/* BULLET MOVE */
+/* MOVE DOWN */
 
 function moveDown(bullet,speed){
 
@@ -320,14 +297,27 @@ clearInterval(move)
 
 }
 
+/* MOVE ANGLE WITH LIMIT */
+
 function moveAngle(bullet,vx,vy){
+
+let startX=bullet.offsetLeft
+let startY=bullet.offsetTop
+
+let maxDistance=300
 
 let move=setInterval(()=>{
 
 bullet.style.left=bullet.offsetLeft+vx+"px"
 bullet.style.top=bullet.offsetTop+vy+"px"
 
+let dx=bullet.offsetLeft-startX
+let dy=bullet.offsetTop-startY
+
+let dist=Math.sqrt(dx*dx+dy*dy)
+
 if(
+dist>maxDistance||
 bullet.offsetTop>window.innerHeight||
 bullet.offsetLeft<0||
 bullet.offsetLeft>window.innerWidth
@@ -340,7 +330,21 @@ clearInterval(move)
 
 }
 
-/* BOSS AFTER 1 MINUTE */
+/* CLEAN BULLETS */
+
+setInterval(()=>{
+
+let bullets=document.querySelectorAll(".enemyBullet")
+
+if(bullets.length>60){
+for(let i=0;i<20;i++){
+bullets[i].remove()
+}
+}
+
+},2000)
+
+/* BOSS */
 
 setTimeout(spawnBoss,60000)
 
@@ -356,34 +360,7 @@ boss.style.top="80px"
 
 document.body.appendChild(boss)
 
-setInterval(()=>electric(boss),2000)
-
-}
-
-/* ELECTRIC ATTACK */
-
-function electric(boss){
-
-for(let i=0;i<6;i++){
-
-let bullet=document.createElement("div")
-bullet.className="enemyBullet"
-
-bullet.style.background="cyan"
-
-bullet.style.left=boss.offsetLeft+110+"px"
-bullet.style.top=boss.offsetTop+70+"px"
-
-document.body.appendChild(bullet)
-
-let angle=i*(Math.PI/3)
-
-let vx=Math.cos(angle)*4
-let vy=Math.sin(angle)*4
-
-moveAngle(bullet,vx,vy)
-
-}
+setInterval(()=>spread(boss),2000)
 
 }
 
