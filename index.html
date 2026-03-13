@@ -68,11 +68,11 @@ text-align:center;
 .boss{
 position:absolute;
 width:220px;
-height:140px;
+height:150px;
 background:red;
-font-size:30px;
+font-size:26px;
 text-align:center;
-line-height:140px;
+line-height:40px;
 border:4px solid white;
 }
 
@@ -91,6 +91,45 @@ width:8px;
 height:8px;
 border-radius:50%;
 background:orange;
+}
+
+/* STAR */
+
+.star{
+position:absolute;
+width:2px;
+height:2px;
+background:white;
+}
+
+/* BOSS HP BAR */
+
+#bossBar{
+position:absolute;
+top:10px;
+left:50%;
+transform:translateX(-50%);
+width:300px;
+height:20px;
+background:#222;
+border:2px solid white;
+}
+
+#bossHP{
+height:100%;
+width:100%;
+background:red;
+}
+
+/* EXPLOSION */
+
+.explosion{
+position:absolute;
+width:80px;
+height:80px;
+background:orange;
+border-radius:50%;
+box-shadow:0 0 40px red;
 }
 
 #score{
@@ -112,6 +151,10 @@ left:10px;
 <div id="player"></div>
 <div id="score">Score: 0</div>
 
+<div id="bossBar">
+<div id="bossHP"></div>
+</div>
+
 <script>
 
 /* INTRO */
@@ -120,7 +163,7 @@ setTimeout(()=>{
 document.getElementById("intro").style.display="none"
 },4000)
 
-/* PLAYER CONTROL */
+/* PLAYER */
 
 let player=document.getElementById("player")
 
@@ -136,6 +179,36 @@ player.style.left=e.touches[0].clientX-35+"px"
 
 let score=0
 let enemyTypes=["Bayu","Amer","Sapei"]
+let bossHP=50
+
+/* STAR BACKGROUND */
+
+function createStar(){
+
+let star=document.createElement("div")
+star.className="star"
+
+star.style.left=Math.random()*window.innerWidth+"px"
+star.style.top="0px"
+
+document.body.appendChild(star)
+
+let speed=Math.random()*2+1
+
+let move=setInterval(()=>{
+
+star.style.top=star.offsetTop+speed+"px"
+
+if(star.offsetTop>window.innerHeight){
+star.remove()
+clearInterval(move)
+}
+
+},20)
+
+}
+
+setInterval(createStar,100)
 
 /* PLAYER SHOOT */
 
@@ -164,6 +237,8 @@ if(bullet.offsetTop<0){
 bullet.remove()
 clearInterval(move)
 }
+
+checkBossHit(bullet)
 
 },20)
 
@@ -211,22 +286,18 @@ clearInterval(shoot)
 
 function enemyAttack(enemy,type){
 
-if(!document.body.contains(enemy)) return
-
 if(type=="Bayu") laser(enemy)
-if(type=="Amer") spread(enemy)
+if(type=="Amer") bigShot(enemy)
 if(type=="Sapei") bubble(enemy)
 
 }
-
-/* LASER */
 
 function laser(enemy){
 
 let bullet=document.createElement("div")
 bullet.className="enemyBullet"
-
 bullet.style.background="red"
+
 bullet.style.left=enemy.offsetLeft+60+"px"
 bullet.style.top=enemy.offsetTop+80+"px"
 
@@ -236,39 +307,28 @@ moveDown(bullet,6)
 
 }
 
-/* SPREAD WITH DISTANCE LIMIT */
-
-function spread(enemy){
-
-for(let i=0;i<4;i++){
+function bigShot(enemy){
 
 let bullet=document.createElement("div")
 bullet.className="enemyBullet"
 
-bullet.style.background="cyan"
-bullet.style.left=enemy.offsetLeft+60+"px"
-bullet.style.top=enemy.offsetTop+60+"px"
+bullet.style.width="20px"
+bullet.style.height="20px"
+bullet.style.background="orange"
+
+bullet.style.left=enemy.offsetLeft+50+"px"
+bullet.style.top=enemy.offsetTop+80+"px"
 
 document.body.appendChild(bullet)
 
-let angle=i*(Math.PI/2)
-
-let vx=Math.cos(angle)*3
-let vy=Math.sin(angle)*3
-
-moveAngle(bullet,vx,vy)
+moveDown(bullet,5)
 
 }
-
-}
-
-/* BUBBLE */
 
 function bubble(enemy){
 
 let bullet=document.createElement("div")
 bullet.className="enemyBullet"
-
 bullet.style.background="white"
 
 bullet.style.left=enemy.offsetLeft+60+"px"
@@ -279,8 +339,6 @@ document.body.appendChild(bullet)
 moveDown(bullet,4)
 
 }
-
-/* MOVE DOWN */
 
 function moveDown(bullet,speed){
 
@@ -297,53 +355,6 @@ clearInterval(move)
 
 }
 
-/* MOVE ANGLE WITH LIMIT */
-
-function moveAngle(bullet,vx,vy){
-
-let startX=bullet.offsetLeft
-let startY=bullet.offsetTop
-
-let maxDistance=300
-
-let move=setInterval(()=>{
-
-bullet.style.left=bullet.offsetLeft+vx+"px"
-bullet.style.top=bullet.offsetTop+vy+"px"
-
-let dx=bullet.offsetLeft-startX
-let dy=bullet.offsetTop-startY
-
-let dist=Math.sqrt(dx*dx+dy*dy)
-
-if(
-dist>maxDistance||
-bullet.offsetTop>window.innerHeight||
-bullet.offsetLeft<0||
-bullet.offsetLeft>window.innerWidth
-){
-bullet.remove()
-clearInterval(move)
-}
-
-},20)
-
-}
-
-/* CLEAN BULLETS */
-
-setInterval(()=>{
-
-let bullets=document.querySelectorAll(".enemyBullet")
-
-if(bullets.length>60){
-for(let i=0;i<20;i++){
-bullets[i].remove()
-}
-}
-
-},2000)
-
 /* BOSS */
 
 setTimeout(spawnBoss,60000)
@@ -353,14 +364,115 @@ function spawnBoss(){
 let boss=document.createElement("div")
 boss.className="boss"
 
-boss.innerText="JOKOWI"
+boss.innerHTML="🐒<br>JOKOWI"
 
 boss.style.left="30%"
 boss.style.top="80px"
 
 document.body.appendChild(boss)
 
-setInterval(()=>spread(boss),2000)
+setInterval(()=>{
+bossMissile(boss)
+},3000)
+
+}
+
+/* BOSS MISSILE */
+
+function bossMissile(boss){
+
+let missile=document.createElement("div")
+missile.className="enemyBullet"
+
+missile.style.width="20px"
+missile.style.height="40px"
+missile.style.background="red"
+
+missile.style.left=boss.offsetLeft+100+"px"
+missile.style.top=boss.offsetTop+120+"px"
+
+document.body.appendChild(missile)
+
+let move=setInterval(()=>{
+
+let dx=player.offsetLeft-missile.offsetLeft
+let dy=player.offsetTop-missile.offsetTop
+
+let dist=Math.sqrt(dx*dx+dy*dy)
+
+missile.style.left=missile.offsetLeft+(dx/dist*4)+"px"
+missile.style.top=missile.offsetTop+(dy/dist*4)+"px"
+
+if(missile.offsetTop>window.innerHeight){
+missile.remove()
+clearInterval(move)
+}
+
+},20)
+
+}
+
+/* BOSS HIT */
+
+function checkBossHit(bullet){
+
+let boss=document.querySelector(".boss")
+
+if(!boss) return
+
+if(
+bullet.offsetTop<boss.offsetTop+150 &&
+bullet.offsetTop+14>boss.offsetTop &&
+bullet.offsetLeft<boss.offsetLeft+220 &&
+bullet.offsetLeft+6>boss.offsetLeft
+){
+
+bossHP--
+
+updateBossHP()
+
+bullet.remove()
+
+if(bossHP<=0){
+
+explode(boss.offsetLeft,boss.offsetTop)
+
+boss.remove()
+
+score+=100
+document.getElementById("score").innerText="Score: "+score
+
+}
+
+}
+
+}
+
+/* UPDATE HP */
+
+function updateBossHP(){
+
+let percent=(bossHP/50)*100
+
+document.getElementById("bossHP").style.width=percent+"%"
+
+}
+
+/* EXPLOSION */
+
+function explode(x,y){
+
+let boom=document.createElement("div")
+boom.className="explosion"
+
+boom.style.left=x+"px"
+boom.style.top=y+"px"
+
+document.body.appendChild(boom)
+
+setTimeout(()=>{
+boom.remove()
+},500)
 
 }
 
