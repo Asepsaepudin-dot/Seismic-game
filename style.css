@@ -1,0 +1,21 @@
+#player{
+position:absolute;
+width:70px;
+height:70px;
+background:linear-gradient(#888,#eee);
+clip-path:polygon(
+50% 0%,
+70% 25%,
+100% 40%,
+75% 60%,
+65% 100%,
+50% 80%,
+35% 100%,
+25% 60%,
+0% 40%,
+30% 25%
+);
+bottom:80px;
+left:50%;
+box-shadow:0 0 10px cyan;
+}
