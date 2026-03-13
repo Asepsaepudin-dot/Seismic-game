@@ -1,54 +1,367 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Dino Simple</title>
+<title>Attack on Bigsong</title>
+
 <style>
-body{margin:0;background:#eee;overflow:hidden}
-#dino{
+
+body{
+margin:0;
+overflow:hidden;
+font-family:monospace;
+color:white;
+transition:background 1s;
+}
+
+/* MAP */
+
+.space{
+background:black;
+}
+
+.moon{
+background:#3b3b3b;
+}
+
+.ocean{
+background:linear-gradient(#003366,#001122);
+}
+
+/* PLAYER */
+
+#player{
+position:absolute;
+width:50px;
+height:50px;
+background:linear-gradient(cyan,blue);
+clip-path:polygon(50% 0%,100% 100%,0% 100%);
+bottom:60px;
+left:50%;
+}
+
+/* ENEMY */
+
+.enemy{
+position:absolute;
 width:40px;
 height:40px;
-background:green;
-position:absolute;
-bottom:0;
-left:50px;
+background:purple;
+border-radius:10px;
 }
-#cactus{
-width:20px;
-height:40px;
+
+/* BOSS */
+
+.boss{
+position:absolute;
+width:140px;
+height:140px;
 background:red;
+border:5px solid white;
+border-radius:20px;
+text-align:center;
+font-size:20px;
+}
+
+/* BULLETS */
+
+.bullet{
 position:absolute;
-bottom:0;
-right:-20px;
-animation:move 2s linear infinite;
+width:6px;
+height:14px;
+background:yellow;
 }
-@keyframes move{
-0%{right:-20px}
-100%{right:100%}
+
+.enemyBullet{
+position:absolute;
+width:8px;
+height:8px;
+background:orange;
+border-radius:50%;
 }
-.jump{
-animation:jump 0.4s;
+
+/* LOOT */
+
+.loot{
+position:absolute;
+width:25px;
+height:25px;
+background:lime;
+border-radius:6px;
 }
-@keyframes jump{
-0%{bottom:0}
-50%{bottom:120px}
-100%{bottom:0}
+
+/* UI */
+
+#score{
+position:absolute;
+top:10px;
+left:10px;
 }
+
+#weapon{
+position:absolute;
+top:30px;
+left:10px;
+}
+
+#map{
+position:absolute;
+top:50px;
+left:10px;
+}
+
 </style>
 </head>
-<body>
 
-<div id="dino"></div>
-<div id="cactus"></div>
+<body class="space">
+
+<div id="player"></div>
+
+<div id="score">Score: 0</div>
+<div id="weapon">Weapon: Normal</div>
+<div id="map">Map: Space</div>
 
 <script>
-let dino=document.getElementById("dino")
 
-document.addEventListener("click",()=>{
- if(!dino.classList.contains("jump")){
-  dino.classList.add("jump")
-  setTimeout(()=>dino.classList.remove("jump"),400)
- }
+/* PLAYER */
+
+let player=document.getElementById("player")
+
+document.addEventListener("mousemove",e=>{
+player.style.left=e.clientX-25+"px"
 })
+
+document.addEventListener("touchmove",e=>{
+player.style.left=e.touches[0].clientX-25+"px"
+})
+
+/* GAME DATA */
+
+let score=0
+let weapon="normal"
+let bossSpawn=false
+
+/* SHOOT */
+
+document.addEventListener("click",shoot)
+document.addEventListener("touchstart",shoot)
+
+function shoot(){
+
+if(weapon=="normal"){
+createBullet(player.offsetLeft+22,player.offsetTop)
+}
+
+if(weapon=="double"){
+createBullet(player.offsetLeft+10,player.offsetTop)
+createBullet(player.offsetLeft+35,player.offsetTop)
+}
+
+if(weapon=="spread"){
+createBullet(player.offsetLeft+22,player.offsetTop)
+createBullet(player.offsetLeft+5,player.offsetTop)
+createBullet(player.offsetLeft+40,player.offsetTop)
+}
+
+}
+
+function createBullet(x,y){
+
+let bullet=document.createElement("div")
+bullet.className="bullet"
+
+bullet.style.left=x+"px"
+bullet.style.top=y+"px"
+
+document.body.appendChild(bullet)
+
+let move=setInterval(()=>{
+
+bullet.style.top=bullet.offsetTop-10+"px"
+
+if(bullet.offsetTop<0){
+bullet.remove()
+clearInterval(move)
+}
+
+document.querySelectorAll(".enemy,.boss").forEach(enemy=>{
+
+if(
+bullet.offsetTop<enemy.offsetTop+enemy.offsetHeight &&
+bullet.offsetTop+14>enemy.offsetTop &&
+bullet.offsetLeft<enemy.offsetLeft+enemy.offsetWidth &&
+bullet.offsetLeft+6>enemy.offsetLeft
+){
+
+enemy.remove()
+bullet.remove()
+clearInterval(move)
+
+score++
+
+document.getElementById("score").innerText="Score: "+score
+
+spawnLoot(enemy.offsetLeft,enemy.offsetTop)
+
+if(score>20 && !bossSpawn){
+spawnBoss()
+bossSpawn=true
+}
+
+}
+
+})
+
+},20)
+
+}
+
+/* ENEMY */
+
+function spawnEnemy(){
+
+let enemy=document.createElement("div")
+enemy.className="enemy"
+
+enemy.style.left=Math.random()*window.innerWidth+"px"
+enemy.style.top="-40px"
+
+document.body.appendChild(enemy)
+
+let move=setInterval(()=>{
+
+enemy.style.top=enemy.offsetTop+2+"px"
+
+if(Math.random()<0.02) enemyShoot(enemy)
+
+if(enemy.offsetTop>window.innerHeight){
+enemy.remove()
+clearInterval(move)
+}
+
+},20)
+
+}
+
+function enemyShoot(enemy){
+
+let bullet=document.createElement("div")
+bullet.className="enemyBullet"
+
+bullet.style.left=enemy.offsetLeft+15+"px"
+bullet.style.top=enemy.offsetTop+30+"px"
+
+document.body.appendChild(bullet)
+
+let move=setInterval(()=>{
+
+bullet.style.top=bullet.offsetTop+5+"px"
+
+if(bullet.offsetTop>window.innerHeight){
+bullet.remove()
+clearInterval(move)
+}
+
+},20)
+
+}
+
+/* LOOT WEAPON */
+
+function spawnLoot(x,y){
+
+if(Math.random()<0.3){
+
+let loot=document.createElement("div")
+loot.className="loot"
+
+loot.style.left=x+"px"
+loot.style.top=y+"px"
+
+document.body.appendChild(loot)
+
+let move=setInterval(()=>{
+
+loot.style.top=loot.offsetTop+2+"px"
+
+if(
+loot.offsetTop>player.offsetTop &&
+loot.offsetLeft<player.offsetLeft+50 &&
+loot.offsetLeft+25>player.offsetLeft
+){
+
+loot.remove()
+clearInterval(move)
+
+let weapons=["normal","double","spread"]
+weapon=weapons[Math.floor(Math.random()*weapons.length)]
+
+document.getElementById("weapon").innerText="Weapon: "+weapon
+
+}
+
+if(loot.offsetTop>window.innerHeight){
+loot.remove()
+clearInterval(move)
+}
+
+},20)
+
+}
+
+}
+
+/* BOSS */
+
+function spawnBoss(){
+
+let boss=document.createElement("div")
+boss.className="boss"
+
+boss.innerText="RAJA AMER"
+
+boss.style.left="40%"
+boss.style.top="60px"
+
+document.body.appendChild(boss)
+
+setInterval(()=>{
+enemyShoot(boss)
+},600)
+
+}
+
+/* MAP SYSTEM */
+
+let stage=0
+
+function changeStage(){
+
+stage++
+
+if(stage==1){
+document.body.className="space"
+document.getElementById("map").innerText="Map: Space"
+}
+
+if(stage==2){
+document.body.className="moon"
+document.getElementById("map").innerText="Map: Moon"
+}
+
+if(stage==3){
+document.body.className="ocean"
+document.getElementById("map").innerText="Map: Ocean"
+stage=0
+}
+
+}
+
+setInterval(changeStage,20000)
+
+/* SPAWN ENEMY */
+
+setInterval(spawnEnemy,1000)
+
 </script>
 
 </body>
