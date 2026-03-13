@@ -13,45 +13,95 @@ font-family:monospace;
 color:white;
 }
 
-/* PLAYER JET */
+/* INTRO */
+
+#intro{
+position:fixed;
+width:100%;
+height:100%;
+background:black;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:100;
+}
+
+#title{
+font-size:80px;
+color:orange;
+text-shadow:
+0 0 20px red,
+0 0 40px orange,
+0 0 60px yellow;
+animation:fire 1s infinite alternate;
+}
+
+@keyframes fire{
+from{transform:scale(1)}
+to{transform:scale(1.05)}
+}
+
+/* percikan api */
+
+.spark{
+position:absolute;
+width:6px;
+height:6px;
+background:orange;
+border-radius:50%;
+}
+
+/* PLAYER */
 
 #player{
 position:absolute;
-width:60px;
-height:60px;
-background:linear-gradient(gray,white);
-clip-path:polygon(50% 0%,80% 40%,100% 100%,50% 80%,0% 100%,20% 40%);
+width:70px;
+height:70px;
+background:linear-gradient(#888,#eee);
+clip-path:polygon(
+50% 0%,
+70% 25%,
+100% 40%,
+75% 60%,
+65% 100%,
+50% 80%,
+35% 100%,
+25% 60%,
+0% 40%,
+30% 25%
+);
 bottom:80px;
 left:50%;
+box-shadow:0 0 15px cyan;
 }
 
-/* ENEMY */
+/* enemy kambing */
 
 .enemy{
 position:absolute;
-width:60px;
-height:40px;
-background:purple;
-border-radius:10px;
+width:120px;
+height:80px;
+font-size:22px;
 text-align:center;
-line-height:40px;
-font-size:12px;
+background:#553311;
+border-radius:20px;
 }
 
-/* BOSS */
+/* boss */
 
 .boss{
 position:absolute;
-width:200px;
-height:120px;
+width:220px;
+height:140px;
 background:red;
-border:4px solid white;
+font-size:30px;
 text-align:center;
-line-height:120px;
-font-size:24px;
+line-height:140px;
+border:4px solid white;
 }
 
-/* BULLETS */
+/* bullet */
 
 .bullet{
 position:absolute;
@@ -64,11 +114,11 @@ background:yellow;
 position:absolute;
 width:10px;
 height:10px;
-background:orange;
 border-radius:50%;
+background:orange;
 }
 
-/* UI */
+/* score */
 
 #score{
 position:absolute;
@@ -82,39 +132,68 @@ left:10px;
 
 <body>
 
+<div id="intro">
+<div id="title">ATTACK ON BIGSONG</div>
+</div>
+
 <div id="player"></div>
 <div id="score">Score: 0</div>
 
 <script>
 
-/* PLAYER CONTROL */
+/* INTRO SPARK */
+
+let intro=document.getElementById("intro")
+
+function spark(){
+
+let s=document.createElement("div")
+s.className="spark"
+
+s.style.left=Math.random()*window.innerWidth+"px"
+s.style.top=Math.random()*window.innerHeight+"px"
+
+document.body.appendChild(s)
+
+setTimeout(()=>s.remove(),1000)
+
+}
+
+setInterval(spark,80)
+
+/* START GAME AFTER 4s */
+
+setTimeout(()=>{
+intro.style.display="none"
+},4000)
+
+/* PLAYER */
 
 let player=document.getElementById("player")
 
 document.addEventListener("mousemove",e=>{
-player.style.left=e.clientX-30+"px"
+player.style.left=e.clientX-35+"px"
 })
 
 document.addEventListener("touchmove",e=>{
-player.style.left=e.touches[0].clientX-30+"px"
+player.style.left=e.touches[0].clientX-35+"px"
 })
 
-/* DATA GAME */
+/* DATA */
 
 let score=0
 let enemyTypes=["Bayu","Amer","Sapei"]
 
-/* SHOOT */
+/* AUTO SHOOT PLAYER */
 
-document.addEventListener("click",shoot)
-document.addEventListener("touchstart",shoot)
+setInterval(shoot,333)
 
 function shoot(){
 
 let bullet=document.createElement("div")
 bullet.className="bullet"
 
-bullet.style.left=player.offsetLeft+27+"px"
+bullet.style.left=player.offsetLeft+32+"px"
 bullet.style.top=player.offsetTop+"px"
 
 document.body.appendChild(bullet)
@@ -131,9 +210,9 @@ clearInterval(move)
 document.querySelectorAll(".enemy").forEach(enemy=>{
 
 if(
-bullet.offsetTop<enemy.offsetTop+40 &&
+bullet.offsetTop<enemy.offsetTop+80 &&
 bullet.offsetTop+14>enemy.offsetTop &&
-bullet.offsetLeft<enemy.offsetLeft+60 &&
+bullet.offsetLeft<enemy.offsetLeft+120 &&
 bullet.offsetLeft+6>enemy.offsetLeft
 ){
 
@@ -162,24 +241,28 @@ let type=enemyTypes[Math.floor(Math.random()*enemyTypes.length)]
 
 let enemy=document.createElement("div")
 enemy.className="enemy"
-enemy.innerText=type
+
+enemy.innerHTML="🐐<br>"+type
 
 enemy.style.left=Math.random()*window.innerWidth+"px"
-enemy.style.top="-40px"
+enemy.style.top="-80px"
 
 document.body.appendChild(enemy)
+
+/* AUTO SHOOT ENEMY */
+
+let attack=setInterval(()=>{
+enemyAttack(enemy,type)
+},333)
 
 let move=setInterval(()=>{
 
 enemy.style.top=enemy.offsetTop+2+"px"
 
-if(Math.random()<0.03){
-enemyAttack(enemy,type)
-}
-
 if(enemy.offsetTop>window.innerHeight){
 enemy.remove()
 clearInterval(move)
+clearInterval(attack)
 }
 
 },20)
@@ -189,6 +272,8 @@ clearInterval(move)
 /* SERANGAN MUSUH */
 
 function enemyAttack(enemy,type){
+
+if(!document.body.contains(enemy)) return
 
 if(type=="Bayu"){
 laser(enemy)
@@ -213,12 +298,12 @@ bullet.className="enemyBullet"
 
 bullet.style.background="red"
 
-bullet.style.left=enemy.offsetLeft+25+"px"
-bullet.style.top=enemy.offsetTop+40+"px"
+bullet.style.left=enemy.offsetLeft+60+"px"
+bullet.style.top=enemy.offsetTop+80+"px"
 
 document.body.appendChild(bullet)
 
-moveDown(bullet,6)
+moveDown(bullet,7)
 
 }
 
@@ -231,8 +316,8 @@ for(let i=0;i<6;i++){
 let bullet=document.createElement("div")
 bullet.className="enemyBullet"
 
-bullet.style.left=enemy.offsetLeft+30+"px"
-bullet.style.top=enemy.offsetTop+20+"px"
+bullet.style.left=enemy.offsetLeft+60+"px"
+bullet.style.top=enemy.offsetTop+60+"px"
 
 document.body.appendChild(bullet)
 
@@ -247,7 +332,7 @@ moveAngle(bullet,vx,vy)
 
 }
 
-/* SEMBURAN BUBBLE */
+/* BUBBLE */
 
 function bubble(enemy){
 
@@ -256,8 +341,8 @@ bullet.className="enemyBullet"
 
 bullet.style.background="white"
 
-bullet.style.left=enemy.offsetLeft+25+"px"
-bullet.style.top=enemy.offsetTop+40+"px"
+bullet.style.left=enemy.offsetLeft+60+"px"
+bullet.style.top=enemy.offsetTop+80+"px"
 
 document.body.appendChild(bullet)
 
@@ -282,8 +367,6 @@ clearInterval(move)
 
 }
 
-/* GERAK ANGLE */
-
 function moveAngle(bullet,vx,vy){
 
 let move=setInterval(()=>{
@@ -304,7 +387,7 @@ clearInterval(move)
 
 }
 
-/* BOSS SETELAH 1 MENIT */
+/* BOSS */
 
 setTimeout(spawnBoss,60000)
 
@@ -320,7 +403,7 @@ boss.style.top="80px"
 
 document.body.appendChild(boss)
 
-setInterval(()=>electric(boss),800)
+setInterval(()=>electric(boss),333)
 
 }
 
@@ -335,8 +418,8 @@ bullet.className="enemyBullet"
 
 bullet.style.background="cyan"
 
-bullet.style.left=boss.offsetLeft+100+"px"
-bullet.style.top=boss.offsetTop+60+"px"
+bullet.style.left=boss.offsetLeft+110+"px"
+bullet.style.top=boss.offsetTop+70+"px"
 
 document.body.appendChild(bullet)
 
