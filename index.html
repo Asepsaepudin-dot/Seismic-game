@@ -8,34 +8,20 @@
 body{
 margin:0;
 overflow:hidden;
+background:black;
 font-family:monospace;
 color:white;
-transition:background 1s;
 }
 
-/* MAP */
-
-.space{
-background:black;
-}
-
-.moon{
-background:#3b3b3b;
-}
-
-.ocean{
-background:linear-gradient(#003366,#001122);
-}
-
-/* PLAYER */
+/* PLAYER JET */
 
 #player{
 position:absolute;
-width:50px;
-height:50px;
-background:linear-gradient(cyan,blue);
-clip-path:polygon(50% 0%,100% 100%,0% 100%);
-bottom:60px;
+width:60px;
+height:60px;
+background:linear-gradient(gray,white);
+clip-path:polygon(50% 0%,80% 40%,100% 100%,50% 80%,0% 100%,20% 40%);
+bottom:80px;
 left:50%;
 }
 
@@ -43,23 +29,26 @@ left:50%;
 
 .enemy{
 position:absolute;
-width:40px;
+width:60px;
 height:40px;
 background:purple;
 border-radius:10px;
+text-align:center;
+line-height:40px;
+font-size:12px;
 }
 
 /* BOSS */
 
 .boss{
 position:absolute;
-width:140px;
-height:140px;
+width:200px;
+height:120px;
 background:red;
-border:5px solid white;
-border-radius:20px;
+border:4px solid white;
 text-align:center;
-font-size:20px;
+line-height:120px;
+font-size:24px;
 }
 
 /* BULLETS */
@@ -73,20 +62,10 @@ background:yellow;
 
 .enemyBullet{
 position:absolute;
-width:8px;
-height:8px;
+width:10px;
+height:10px;
 background:orange;
 border-radius:50%;
-}
-
-/* LOOT */
-
-.loot{
-position:absolute;
-width:25px;
-height:25px;
-background:lime;
-border-radius:6px;
 }
 
 /* UI */
@@ -97,48 +76,33 @@ top:10px;
 left:10px;
 }
 
-#weapon{
-position:absolute;
-top:30px;
-left:10px;
-}
-
-#map{
-position:absolute;
-top:50px;
-left:10px;
-}
-
 </style>
+
 </head>
 
-<body class="space">
+<body>
 
 <div id="player"></div>
-
 <div id="score">Score: 0</div>
-<div id="weapon">Weapon: Normal</div>
-<div id="map">Map: Space</div>
 
 <script>
 
-/* PLAYER */
+/* PLAYER CONTROL */
 
 let player=document.getElementById("player")
 
 document.addEventListener("mousemove",e=>{
-player.style.left=e.clientX-25+"px"
+player.style.left=e.clientX-30+"px"
 })
 
 document.addEventListener("touchmove",e=>{
-player.style.left=e.touches[0].clientX-25+"px"
+player.style.left=e.touches[0].clientX-30+"px"
 })
 
-/* GAME DATA */
+/* DATA GAME */
 
 let score=0
-let weapon="normal"
-let bossSpawn=false
+let enemyTypes=["Bayu","Amer","Sapei"]
 
 /* SHOOT */
 
@@ -147,30 +111,11 @@ document.addEventListener("touchstart",shoot)
 
 function shoot(){
 
-if(weapon=="normal"){
-createBullet(player.offsetLeft+22,player.offsetTop)
-}
-
-if(weapon=="double"){
-createBullet(player.offsetLeft+10,player.offsetTop)
-createBullet(player.offsetLeft+35,player.offsetTop)
-}
-
-if(weapon=="spread"){
-createBullet(player.offsetLeft+22,player.offsetTop)
-createBullet(player.offsetLeft+5,player.offsetTop)
-createBullet(player.offsetLeft+40,player.offsetTop)
-}
-
-}
-
-function createBullet(x,y){
-
 let bullet=document.createElement("div")
 bullet.className="bullet"
 
-bullet.style.left=x+"px"
-bullet.style.top=y+"px"
+bullet.style.left=player.offsetLeft+27+"px"
+bullet.style.top=player.offsetTop+"px"
 
 document.body.appendChild(bullet)
 
@@ -183,12 +128,12 @@ bullet.remove()
 clearInterval(move)
 }
 
-document.querySelectorAll(".enemy,.boss").forEach(enemy=>{
+document.querySelectorAll(".enemy").forEach(enemy=>{
 
 if(
-bullet.offsetTop<enemy.offsetTop+enemy.offsetHeight &&
+bullet.offsetTop<enemy.offsetTop+40 &&
 bullet.offsetTop+14>enemy.offsetTop &&
-bullet.offsetLeft<enemy.offsetLeft+enemy.offsetWidth &&
+bullet.offsetLeft<enemy.offsetLeft+60 &&
 bullet.offsetLeft+6>enemy.offsetLeft
 ){
 
@@ -197,15 +142,7 @@ bullet.remove()
 clearInterval(move)
 
 score++
-
 document.getElementById("score").innerText="Score: "+score
-
-spawnLoot(enemy.offsetLeft,enemy.offsetTop)
-
-if(score>20 && !bossSpawn){
-spawnBoss()
-bossSpawn=true
-}
 
 }
 
@@ -215,12 +152,17 @@ bossSpawn=true
 
 }
 
-/* ENEMY */
+/* SPAWN MUSUH */
+
+setInterval(spawnEnemy,5000)
 
 function spawnEnemy(){
 
+let type=enemyTypes[Math.floor(Math.random()*enemyTypes.length)]
+
 let enemy=document.createElement("div")
 enemy.className="enemy"
+enemy.innerText=type
 
 enemy.style.left=Math.random()*window.innerWidth+"px"
 enemy.style.top="-40px"
@@ -231,7 +173,9 @@ let move=setInterval(()=>{
 
 enemy.style.top=enemy.offsetTop+2+"px"
 
-if(Math.random()<0.02) enemyShoot(enemy)
+if(Math.random()<0.03){
+enemyAttack(enemy,type)
+}
 
 if(enemy.offsetTop>window.innerHeight){
 enemy.remove()
@@ -242,19 +186,92 @@ clearInterval(move)
 
 }
 
-function enemyShoot(enemy){
+/* SERANGAN MUSUH */
+
+function enemyAttack(enemy,type){
+
+if(type=="Bayu"){
+laser(enemy)
+}
+
+if(type=="Amer"){
+spread(enemy)
+}
+
+if(type=="Sapei"){
+bubble(enemy)
+}
+
+}
+
+/* LASER */
+
+function laser(enemy){
 
 let bullet=document.createElement("div")
 bullet.className="enemyBullet"
 
-bullet.style.left=enemy.offsetLeft+15+"px"
-bullet.style.top=enemy.offsetTop+30+"px"
+bullet.style.background="red"
+
+bullet.style.left=enemy.offsetLeft+25+"px"
+bullet.style.top=enemy.offsetTop+40+"px"
 
 document.body.appendChild(bullet)
 
+moveDown(bullet,6)
+
+}
+
+/* PELURU SEGALA ARAH */
+
+function spread(enemy){
+
+for(let i=0;i<6;i++){
+
+let bullet=document.createElement("div")
+bullet.className="enemyBullet"
+
+bullet.style.left=enemy.offsetLeft+30+"px"
+bullet.style.top=enemy.offsetTop+20+"px"
+
+document.body.appendChild(bullet)
+
+let angle=i*(Math.PI/3)
+
+let vx=Math.cos(angle)*4
+let vy=Math.sin(angle)*4
+
+moveAngle(bullet,vx,vy)
+
+}
+
+}
+
+/* SEMBURAN BUBBLE */
+
+function bubble(enemy){
+
+let bullet=document.createElement("div")
+bullet.className="enemyBullet"
+
+bullet.style.background="white"
+
+bullet.style.left=enemy.offsetLeft+25+"px"
+bullet.style.top=enemy.offsetTop+40+"px"
+
+document.body.appendChild(bullet)
+
+moveDown(bullet,4)
+
+}
+
+/* GERAK PELURU */
+
+function moveDown(bullet,speed){
+
 let move=setInterval(()=>{
 
-bullet.style.top=bullet.offsetTop+5+"px"
+bullet.style.top=bullet.offsetTop+speed+"px"
 
 if(bullet.offsetTop>window.innerHeight){
 bullet.remove()
@@ -265,42 +282,21 @@ clearInterval(move)
 
 }
 
-/* LOOT WEAPON */
+/* GERAK ANGLE */
 
-function spawnLoot(x,y){
-
-if(Math.random()<0.3){
-
-let loot=document.createElement("div")
-loot.className="loot"
-
-loot.style.left=x+"px"
-loot.style.top=y+"px"
-
-document.body.appendChild(loot)
+function moveAngle(bullet,vx,vy){
 
 let move=setInterval(()=>{
 
-loot.style.top=loot.offsetTop+2+"px"
+bullet.style.left=bullet.offsetLeft+vx+"px"
+bullet.style.top=bullet.offsetTop+vy+"px"
 
 if(
-loot.offsetTop>player.offsetTop &&
-loot.offsetLeft<player.offsetLeft+50 &&
-loot.offsetLeft+25>player.offsetLeft
+bullet.offsetTop>window.innerHeight||
+bullet.offsetLeft<0||
+bullet.offsetLeft>window.innerWidth
 ){
-
-loot.remove()
-clearInterval(move)
-
-let weapons=["normal","double","spread"]
-weapon=weapons[Math.floor(Math.random()*weapons.length)]
-
-document.getElementById("weapon").innerText="Weapon: "+weapon
-
-}
-
-if(loot.offsetTop>window.innerHeight){
-loot.remove()
+bullet.remove()
 clearInterval(move)
 }
 
@@ -308,59 +304,52 @@ clearInterval(move)
 
 }
 
-}
+/* BOSS SETELAH 1 MENIT */
 
-/* BOSS */
+setTimeout(spawnBoss,60000)
 
 function spawnBoss(){
 
 let boss=document.createElement("div")
 boss.className="boss"
 
-boss.innerText="RAJA AMER"
+boss.innerText="JOKOWI"
 
-boss.style.left="40%"
-boss.style.top="60px"
+boss.style.left="30%"
+boss.style.top="80px"
 
 document.body.appendChild(boss)
 
-setInterval(()=>{
-enemyShoot(boss)
-},600)
+setInterval(()=>electric(boss),800)
 
 }
 
-/* MAP SYSTEM */
+/* GELOMBANG LISTRIK */
 
-let stage=0
+function electric(boss){
 
-function changeStage(){
+for(let i=0;i<8;i++){
 
-stage++
+let bullet=document.createElement("div")
+bullet.className="enemyBullet"
 
-if(stage==1){
-document.body.className="space"
-document.getElementById("map").innerText="Map: Space"
+bullet.style.background="cyan"
+
+bullet.style.left=boss.offsetLeft+100+"px"
+bullet.style.top=boss.offsetTop+60+"px"
+
+document.body.appendChild(bullet)
+
+let angle=i*(Math.PI/4)
+
+let vx=Math.cos(angle)*5
+let vy=Math.sin(angle)*5
+
+moveAngle(bullet,vx,vy)
+
 }
 
-if(stage==2){
-document.body.className="moon"
-document.getElementById("map").innerText="Map: Moon"
 }
-
-if(stage==3){
-document.body.className="ocean"
-document.getElementById("map").innerText="Map: Ocean"
-stage=0
-}
-
-}
-
-setInterval(changeStage,20000)
-
-/* SPAWN ENEMY */
-
-setInterval(spawnEnemy,1000)
 
 </script>
 
