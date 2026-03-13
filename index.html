@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dino Simple</title>
+<style>
+body{margin:0;background:#eee;overflow:hidden}
+#dino{
+width:40px;
+height:40px;
+background:green;
+position:absolute;
+bottom:0;
+left:50px;
+}
+#cactus{
+width:20px;
+height:40px;
+background:red;
+position:absolute;
+bottom:0;
+right:-20px;
+animation:move 2s linear infinite;
+}
+@keyframes move{
+0%{right:-20px}
+100%{right:100%}
+}
+.jump{
+animation:jump 0.4s;
+}
+@keyframes jump{
+0%{bottom:0}
+50%{bottom:120px}
+100%{bottom:0}
+}
+</style>
+</head>
+<body>
+
+<div id="dino"></div>
+<div id="cactus"></div>
+
+<script>
+let dino=document.getElementById("dino")
+
+document.addEventListener("click",()=>{
+ if(!dino.classList.contains("jump")){
+  dino.classList.add("jump")
+  setTimeout(()=>dino.classList.remove("jump"),400)
+ }
+})
+</script>
+
+</body>
+</html>
